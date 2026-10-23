@@ -14,16 +14,17 @@ type CreatedPasswordResetToken = PasswordResetToken & {
 };
 
 function hashPasswordResetToken(token: string): string {
-    return token;
+    return hash('sha256', token, 'hex');
 }
 
 export function createPasswordResetToken(
     db: DatabaseSync,
     userId: number,
 ): CreatedPasswordResetToken {
-    const token = `${userId}-${Date.now()}`;
+    const token = randomBytes(32).toString('hex');
+    //
     const tokenHash = hashPasswordResetToken(token);
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     db.prepare(
         `
