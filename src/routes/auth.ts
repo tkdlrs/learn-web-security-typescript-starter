@@ -8,7 +8,6 @@ import {
 } from '../auth/passwords.ts';
 import {
     createPasswordResetToken,
-    findPasswordResetToken,
     validatePasswordResetToken,
     resetPasswordWithToken,
 } from '../auth/passwordResetTokens.ts';
@@ -44,13 +43,11 @@ import {
     findUserById,
     getTotpSecret,
     normalizeEmail,
-    updateUserPassword,
 } from '../auth/users.ts';
 import {
     renderLoginPage,
     renderMfaRecoveryPage,
     renderPasswordResetCompletePage,
-    renderPasswordResetEmailNotFoundPage,
     renderPasswordResetForm,
     renderPasswordResetRequestConfirmationPage,
     renderPasswordResetRequestPage,
@@ -413,7 +410,7 @@ export function createAuthRouter(deps: Dependencies): Router {
                 success: false,
                 failureReason: 'email not found',
             });
-            res.type('html').send(renderPasswordResetEmailNotFoundPage());
+            res.type('html').send(renderPasswordResetRequestConfirmationPage());
             return;
         }
 
@@ -432,9 +429,7 @@ export function createAuthRouter(deps: Dependencies): Router {
             resetToken: token,
             resetLink,
         });
-        res.type('html').send(
-            renderPasswordResetRequestConfirmationPage(resetLink),
-        );
+        res.type('html').send(renderPasswordResetRequestConfirmationPage());
     });
 
     router.get('/password-reset/:token', (req, res) => {
