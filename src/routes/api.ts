@@ -51,18 +51,14 @@ export function createApiRouter(deps: Dependencies): Router {
     });
 
     router.get('/api/integrations/warehouse/orders', (req, res) => {
-        const headerKey = req.header('x-api-key');
-        if (!headerKey) {
-            res.status(401).json({ error: 'key required' });
-            return;
-        }
-        const apiKey = findApiKey(db, headerKey);
+        const apiKey = findApiKey(db, req.header('x-api-key') ?? '');
         if (!apiKey) {
-            res.status(401).json({ error: 'key required' });
+            res.status(401).json({ error: 'Invlaid API key' });
             return;
         }
-        if (!apiKey.scope.includes('orders:read')) {
-            res.status(403).json({ error: 'invalid scope' });
+        //
+        if (apiKey.scope !== 'orders:read') {
+            res.status(403).json({ error: 'API key scope is not allowed' });
             return;
         }
         //
