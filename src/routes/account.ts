@@ -174,7 +174,10 @@ export function createAccountRouter(deps: Dependencies): Router {
             return;
         }
         const currentPassword = String(req.body.currentPassword ?? '');
-        if (!currentPassword) {
+        if (
+            !currentPassword ||
+            !verifyPassword(currentPassword, current.user.password_hash)
+        ) {
             res.status(403)
                 .type('html')
                 .send(
@@ -185,23 +188,6 @@ export function createAccountRouter(deps: Dependencies): Router {
                 );
             return;
         }
-        //
-        const checkedPassword = verifyPassword(
-            currentPassword,
-            current.user.password_hash,
-        );
-        if (!checkedPassword) {
-            res.status(403)
-                .type('html')
-                .send(
-                    renderAccountPage(
-                        current,
-                        'Re-enter your current password to change your email.',
-                    ),
-                );
-            return;
-        }
-        //
         const email = normalizeEmail(String(req.body.email ?? ''));
         if (!email) {
             res.status(400)
