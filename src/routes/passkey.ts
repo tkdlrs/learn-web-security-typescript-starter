@@ -127,12 +127,6 @@ export function createPasskeyRouter(deps: Dependencies): Router {
 
         let verification;
         try {
-            // verification = {
-            //   verified: false,
-            //   authenticationInfo: {
-            //     newCounter: passkeyVerificationInput.credential.counter,
-            //   },
-            // };
             verification = await verifyAuthenticationResponse({
                 response: passkeyVerificationInput.response,
                 expectedChallenge: stored.challenge,
