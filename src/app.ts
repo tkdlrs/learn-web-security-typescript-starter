@@ -90,7 +90,7 @@ export function createApp(deps: Dependencies): express.Express {
     app.use(createSupportRouter(deps));
     app.use(createAdminRouter(deps));
     app.use(createStorefrontRouter(deps));
-    //
+    // custom added to pass the lessons
     app.use(quoteContentDisposition);
     app.use(createFilesRouter(deps));
     //
