@@ -53,10 +53,6 @@ export function runSimulatedAssistant(request: AssistantRequest): string {
     }
 
     if (/refund/i.test(userMessage)) {
-        //     const refundTool = request.tools.find(
-        //         (tool) => tool.name === 'issue_refund',
-        //     );
-        // return refundTool ? refundTool.execute({ orderId }) :
         return 'I cannot issue refunds. Please contact support.';
     }
 
@@ -96,24 +92,6 @@ function createAssistantTools(db: DatabaseSync): AssistantTool[] {
                 return `Order #${order.id} is ${order.status}.`;
             },
         },
-        // {
-        //     name: 'issue_refund',
-        //     description: 'Issue a refund for an order.',
-        //     execute: (input) => {
-        //         const orderId = Number(input.orderId);
-        //         if (
-        //             !Number.isSafeInteger(orderId) ||
-        //             !findOrderById(db, orderId)
-        //         ) {
-        //             return 'Order not found.';
-        //         }
-
-        //         db.prepare(
-        //             "UPDATE orders SET status = 'refunded' WHERE id = ?",
-        //         ).run(orderId);
-        //         return `Order #${orderId} was refunded.`;
-        //     },
-        // },
     ];
 }
 
