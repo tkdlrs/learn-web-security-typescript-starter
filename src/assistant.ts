@@ -7,7 +7,7 @@ type AssistantMessage = {
 };
 
 type AssistantTool = {
-    name: 'get_order_status' | 'issue_refund';
+    name: 'get_order_status';
     description: string;
     execute: (input: Record<string, unknown>) => string;
 };
@@ -53,12 +53,11 @@ export function runSimulatedAssistant(request: AssistantRequest): string {
     }
 
     if (/refund/i.test(userMessage)) {
-        const refundTool = request.tools.find(
-            (tool) => tool.name === 'issue_refund',
-        );
-        return refundTool
-            ? refundTool.execute({ orderId })
-            : 'I cannot issue refunds. Please contact support.';
+        //     const refundTool = request.tools.find(
+        //         (tool) => tool.name === 'issue_refund',
+        //     );
+        // return refundTool ? refundTool.execute({ orderId }) :
+        return 'I cannot issue refunds. Please contact support.';
     }
 
     const statusTool = request.tools.find(
@@ -97,24 +96,24 @@ function createAssistantTools(db: DatabaseSync): AssistantTool[] {
                 return `Order #${order.id} is ${order.status}.`;
             },
         },
-        {
-            name: 'issue_refund',
-            description: 'Issue a refund for an order.',
-            execute: (input) => {
-                const orderId = Number(input.orderId);
-                if (
-                    !Number.isSafeInteger(orderId) ||
-                    !findOrderById(db, orderId)
-                ) {
-                    return 'Order not found.';
-                }
+        // {
+        //     name: 'issue_refund',
+        //     description: 'Issue a refund for an order.',
+        //     execute: (input) => {
+        //         const orderId = Number(input.orderId);
+        //         if (
+        //             !Number.isSafeInteger(orderId) ||
+        //             !findOrderById(db, orderId)
+        //         ) {
+        //             return 'Order not found.';
+        //         }
 
-                db.prepare(
-                    "UPDATE orders SET status = 'refunded' WHERE id = ?",
-                ).run(orderId);
-                return `Order #${orderId} was refunded.`;
-            },
-        },
+        //         db.prepare(
+        //             "UPDATE orders SET status = 'refunded' WHERE id = ?",
+        //         ).run(orderId);
+        //         return `Order #${orderId} was refunded.`;
+        //     },
+        // },
     ];
 }
 
