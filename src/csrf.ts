@@ -53,21 +53,16 @@ export function validateRequestOrigin(appOrigin: string): RequestHandler {
 }
 
 export function csrfTokensMatch(expected: string, actual: unknown): boolean {
-    if (typeof actual !== 'string') return false;
-    //
-    console.log('expected:', expected);
-    console.log('actual:', actual);
-    //
-    const expectedSignature = Buffer.from(expected, 'hex');
-    const actualSignature = Buffer.from(actual, 'hex');
-    console.log('expectedSignature:', expectedSignature);
-    console.log('actualSignature:', actualSignature);
-    //
-    if (actualSignature.length !== expectedSignature.length) return false;
-    //
-    if (timingSafeEqual(expectedSignature, actualSignature)) {
-        return true;
-    } else {
+    if (typeof actual !== 'string') {
         return false;
     }
+    //
+    const expectedBuffer = Buffer.from(expected);
+    const actualBuffer = Buffer.from(actual);
+    //
+    if (actualBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+    //
+    return timingSafeEqual(expectedBuffer, actualBuffer);
 }
