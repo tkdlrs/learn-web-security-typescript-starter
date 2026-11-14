@@ -21,7 +21,8 @@ import { createStorefrontRouter } from './routes/storefront.ts';
 import { createSupportRouter } from './routes/support.ts';
 import { migrateSensitiveDataAtRest } from './storage/migrations.ts';
 import { quoteContentDisposition } from './middleware/quoteContentDisposition.ts';
-
+import cors from 'cors';
+//
 const apiCors: RequestHandler = (req, res, next) => {
     const origin = req.header('Origin');
 
@@ -47,7 +48,7 @@ const apiCors: RequestHandler = (req, res, next) => {
 
     next();
 };
-
+//
 export function createApp(deps: Dependencies): express.Express {
     migrateSensitiveDataAtRest(deps.db, deps.keyring);
     const app = express();
@@ -81,7 +82,15 @@ export function createApp(deps: Dependencies): express.Express {
     app.use(express.json());
     app.use(createPawPalRouter(deps));
     app.use(validateRequestOrigin(deps.appOrigin));
-    app.use('/api', apiCors);
+    app.use(
+        '/api/products',
+        cors({
+            origin: '*',
+            credentials: false,
+            methods: ['GET'],
+            allowedHeaders: [],
+        }),
+    );
     app.use(createApiRouter(deps));
 
     app.use(createArchiveRouter(deps));
