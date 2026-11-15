@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import cors from 'cors';
-import express, { type Response, type RequestHandler } from 'express';
+import express, { type Response } from 'express';
+import helmet from 'helmet';
 import { validateRequestOrigin } from './csrf.ts';
 import type { Dependencies } from './dependencies.ts';
 import { errorHandler, sendErrorPage } from './errors.ts';
@@ -22,7 +23,6 @@ import { createStorefrontRouter } from './routes/storefront.ts';
 import { createSupportRouter } from './routes/support.ts';
 import { migrateSensitiveDataAtRest } from './storage/migrations.ts';
 import { quoteContentDisposition } from './middleware/quoteContentDisposition.ts';
-import helmet from 'helmet';
 
 //
 export function createApp(deps: Dependencies): express.Express {
@@ -32,15 +32,6 @@ export function createApp(deps: Dependencies): express.Express {
     app.use((_req, res, next) => {
         const cspNonce = randomBytes(16).toString('base64');
         res.locals.cspNonce = cspNonce;
-        // res.set('X-Content-Type-Options', 'nosniff');
-        // //
-        // res.set('X-Frame-Options', 'SAMEORIGIN');
-        // res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        // res.set(
-        //     'Content-Security-Policy',
-        //     `frame-ancestors 'self'; default-src 'self'; script-src 'self' 'nonce-${cspNonce}'; style-src 'self'; img-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`,
-        // );
-
         //
         next();
     });
@@ -60,20 +51,29 @@ export function createApp(deps: Dependencies): express.Express {
                 },
             },
             referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-            xFrameOptions: { action: 'sameorigin' },
             strictTransportSecurity: false,
+            xFrameOptions: { action: 'sameorigin' },
         }),
     );
     //
     app.get('/health', (_req, res) => {
         res.json({ ok: true, app: 'bearly-secure' });
     });
+    //
+    app.use(
+        ['/shipping-widget.css', '/shipping-widget.js'],
+        (_req, res, next) => {
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            next();
+        },
+    );
+    //
     app.use(express.static('public'));
     app.use(
         '/vendor/simplewebauthn',
         express.static('node_modules/@simplewebauthn/browser/dist/bundle'),
     );
-
+    //
     app.use(express.urlencoded({ extended: false }));
     app.use(express.json());
     app.use(createPawPalRouter(deps));
@@ -85,19 +85,6 @@ export function createApp(deps: Dependencies): express.Express {
             credentials: false,
             methods: ['GET'],
             allowedHeaders: [],
-        }),
-    );
-    //
-    app.get(
-        '/shipping-widget.css',
-        helmet.crossOriginResourcePolicy({
-            policy: 'cross-origin',
-        }),
-    );
-    app.use(
-        '/shipping-widget.js',
-        helmet.crossOriginResourcePolicy({
-            policy: 'cross-origin',
         }),
     );
     //
