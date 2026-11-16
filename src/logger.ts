@@ -1,12 +1,10 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { validateRequestOrigin } from './csrf.ts';
 
 type LogFields = Record<string, unknown>;
-
-const logPath = join(process.cwd(), 'data', 'bearly-secure.log');
-
 //
+const logPath = join(process.cwd(), 'data', 'bearly-secure.log');
+const REDACTED_VALUE = '[REDACTED]';
 const REDACTED_KEYS = new Set([
     'sessionId',
     'resetToken',
@@ -20,7 +18,7 @@ function redact(fields: LogFields): LogFields {
     return Object.fromEntries(
         Object.entries(fields).map(([key, value]) => [
             key,
-            REDACTED_KEYS.has(key) ? '[REDACTED]' : value,
+            REDACTED_KEYS.has(key) ? REDACTED_VALUE : value,
         ]),
     );
 }
