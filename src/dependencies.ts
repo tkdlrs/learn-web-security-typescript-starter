@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDatabase } from './db/index.ts';
