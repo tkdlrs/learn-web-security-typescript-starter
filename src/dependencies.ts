@@ -5,6 +5,7 @@ import { openDatabase } from './db/index.ts';
 import { loadOptionalKeyring, type Keyring } from './storage/keyring.ts';
 
 export type Dependencies = {
+    pawPalApiKey: string;
     appOrigin: string;
     port: number;
     databasePath: string;
@@ -15,10 +16,9 @@ export type Dependencies = {
     downloadSigningKey: Buffer;
     keyring: Keyring | undefined;
     db: DatabaseSync;
-    pawPalApiKey: string;
 };
 //
-function requireEnv(name: string): string {
+function requireEnv(env: NodeJS.ProcessEnv, name: string): string {
     const value = process.env[name];
     if (!value) {
         throw new Error(`Missing required environment variable: ${name}`);
@@ -55,9 +55,8 @@ export function initDependencies(
         );
     }
     //
-    const PAWPAL_API_KEY = requireEnv('PAWPAL_API_KEY');
-    //
     const values = {
+        pawPalApiKey: requireEnv(env, 'PAWPAL_API_KEY'),
         appOrigin: new URL(env.APP_ORIGIN ?? 'http://localhost:3000').origin,
         port,
         databasePath:
@@ -68,7 +67,6 @@ export function initDependencies(
         maxPublicProductResults: 50,
         downloadSigningKey: randomBytes(32),
         keyring: loadOptionalKeyring(env),
-        pawPalApiKey: PAWPAL_API_KEY,
     };
 
     return { ...values, db: openDatabase(values.databasePath) };

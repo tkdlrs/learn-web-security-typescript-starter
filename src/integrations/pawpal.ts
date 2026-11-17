@@ -3,10 +3,10 @@ import { createHmac } from 'node:crypto';
 export function createPawPalReference(
     orderId: number,
     totalCents: number,
-    pawPalApiKey: string,
+    apiKey: string,
 ): string {
     const payload = `${orderId}:${totalCents}`;
-    const signature = createHmac('sha256', pawPalApiKey)
+    const signature = createHmac('sha256', apiKey)
         .update(payload)
         .digest('hex')
         .slice(0, 16);
