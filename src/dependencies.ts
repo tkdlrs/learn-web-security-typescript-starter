@@ -54,6 +54,10 @@ export function initDependencies(
             'ACORN_FULFILLMENT_DELAY_MS must be a non-negative number',
         );
     }
+    const HEX_SIGNING_KEY = requireEnv(env, 'DOWNLOAD_SIGNING_KEY');
+    if (HEX_SIGNING_KEY.length != 64) {
+        throw new Error('Signing key is not the right size');
+    }
     //
     const values = {
         pawPalApiKey: requireEnv(env, 'PAWPAL_API_KEY'),
@@ -65,7 +69,7 @@ export function initDependencies(
         maxRequestBodyBytes: 32 * 1024,
         maxUploadBytes: 1024 * 1024,
         maxPublicProductResults: 50,
-        downloadSigningKey: randomBytes(32),
+        downloadSigningKey: Buffer.from(HEX_SIGNING_KEY, 'hex'),
         keyring: loadOptionalKeyring(env),
     };
 
