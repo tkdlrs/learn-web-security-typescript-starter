@@ -204,6 +204,7 @@ export function createCheckoutRouter(deps: Dependencies): Router {
         const pawPalReference = createPawPalReference(
             order.id,
             order.total_cents,
+            deps.pawPalApiKey,
         );
 
         logEvent('checkout_started', {
