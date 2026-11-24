@@ -7,6 +7,7 @@ export type Dependencies = {
     pawPalApiKey: string;
     appOrigin: string;
     port: number;
+    trustedProxyHops: number;
     databasePath: string;
     acornFulfillmentDelayMs: number;
     maxRequestBodyBytes: number;
@@ -63,10 +64,16 @@ export function initDependencies(
         );
     }
     //
+
+    //
     const values = {
         pawPalApiKey: requireEnv(env, 'PAWPAL_API_KEY'),
         appOrigin: new URL(env.APP_ORIGIN ?? 'http://localhost:3000').origin,
         port,
+        trustedProxyHops: parseNonNegativeInteger(
+            env.TRUST_PROXY_HOPS ?? '0',
+            'TRUSTED_PROXY_HOPS',
+        ),
         databasePath:
             env.DATABASE_URL ?? join(cwd, 'data', 'bearly-secure.sqlite'),
         acornFulfillmentDelayMs,
