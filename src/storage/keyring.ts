@@ -29,29 +29,34 @@ export function encryptWithKeyring(
     plaintext: Buffer,
     keyring: Keyring | undefined,
 ): VersionedEncryptedPayload {
-    keyring = requireKeyring(keyring);
-    //
-    const currentKey = keyring.keys.get(keyring.activeVersion);
-    if (!currentKey) {
-        throw new Error('current key not found');
+    const configuredKeyring = requireKeyring(keyring);
+    const key = configuredKeyring.keys.get(configuredKeyring.activeVersion);
+    if (!key) {
+        throw new Error(
+            'The keyrind does not contain its active encryption key',
+        );
     }
-    const encryptedObj = encrypt(plaintext, currentKey);
     //
-    return { ...encryptedObj, keyVersion: keyring.activeVersion };
+    return {
+        keyVersion: configuredKeyring.activeVersion,
+        ...encrypt(plaintext, key),
+    };
 }
 //
 export function decryptWithKeyring(
     payload: VersionedEncryptedPayload,
     keyring: Keyring | undefined,
 ): Buffer {
-    keyring = requireKeyring(keyring);
+    const configuredKeyring = requireKeyring(keyring);
     //
-    const payloadsKey = keyring.keys.get(payload.keyVersion);
-    if (!payloadsKey) {
-        throw new Error('Missing key for payload');
+    const key = configuredKeyring.keys.get(payload.keyVersion);
+    if (!key) {
+        throw new Error(
+            `Unknown encryption key version: ${payload.keyVersion}`,
+        );
     }
     //
-    return decrypt(payload, payloadsKey);
+    return decrypt(payload, key);
 }
 /*
  */
@@ -115,18 +120,19 @@ export function encryptStringWithKeyring(
     value: string,
     keyring: Keyring | undefined,
 ): string {
-    const payload = encryptWithKeyring(Buffer.from(value), keyring);
-    //
-    return String(serializeEncryptedPayload(payload));
+    return serializeEncryptedPayload(
+        encryptWithKeyring(Buffer.from(value, 'utf8'), keyring),
+    ).toString('utf8');
 }
 
 export function decryptStringWithKeyring(
     value: string,
     keyring: Keyring | undefined,
 ): string {
-    const plaintext = deserializeEncryptedPayload(Buffer.from(value));
-    //
-    return String(decryptWithKeyring(plaintext, keyring));
+    return decryptWithKeyring(
+        deserializeEncryptedPayload(Buffer.from(value, 'utf8')),
+        keyring,
+    ).toString('utf8');
 }
 
 export function serializeEncryptedPayload(
