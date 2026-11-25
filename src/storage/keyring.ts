@@ -1,3 +1,4 @@
+import { encrypt, decrypt } from './encryption.ts';
 //
 const ACTIVE_VERSION_ENV = 'DATA_ENCRYPTION_ACTIVE_VERSION';
 const KEY_ENV_PREFIX = 'DATA_ENCRYPTION_KEY_';
@@ -22,7 +23,38 @@ type SerializedEncryptedPayload = {
     authTag: string;
     ciphertext: string;
 };
-
+/*
+ */
+export function encryptWithKeyring(
+    plaintext: Buffer,
+    keyring: Keyring | undefined,
+): VersionedEncryptedPayload {
+    keyring = requireKeyring(keyring);
+    //
+    const currentKey = keyring.keys.get(keyring.activeVersion);
+    if (!currentKey) {
+        throw new Error('current key not found');
+    }
+    const encryptedObj = encrypt(plaintext, currentKey);
+    //
+    return { ...encryptedObj, keyVersion: keyring.activeVersion };
+}
+//
+export function decryptWithKeyring(
+    payload: VersionedEncryptedPayload,
+    keyring: Keyring | undefined,
+): Buffer {
+    keyring = requireKeyring(keyring);
+    //
+    const payloadsKey = keyring.keys.get(payload.keyVersion);
+    if (!payloadsKey) {
+        throw new Error('Missing key for payload');
+    }
+    //
+    return decrypt(payload, payloadsKey);
+}
+/*
+ */
 export function loadOptionalKeyring(
     env: NodeJS.ProcessEnv = process.env,
 ): Keyring | undefined {
@@ -81,16 +113,20 @@ export function requireKeyring(keyring: Keyring | undefined): Keyring {
 
 export function encryptStringWithKeyring(
     value: string,
-    _keyring: Keyring | undefined,
+    keyring: Keyring | undefined,
 ): string {
-    return value;
+    const payload = encryptWithKeyring(Buffer.from(value), keyring);
+    //
+    return String(serializeEncryptedPayload(payload));
 }
 
 export function decryptStringWithKeyring(
     value: string,
-    _keyring: Keyring | undefined,
+    keyring: Keyring | undefined,
 ): string {
-    return value;
+    const plaintext = deserializeEncryptedPayload(Buffer.from(value));
+    //
+    return String(decryptWithKeyring(plaintext, keyring));
 }
 
 export function serializeEncryptedPayload(
