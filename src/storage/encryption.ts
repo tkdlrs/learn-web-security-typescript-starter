@@ -1,44 +1,22 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 //
+const ALGORITHM = 'aes-256-gcm';
+const KEY_LENGTH_BYTES = 32;
+const NONCE_LENGTH_BYTES = 12;
+const AUTH_TAG_LENGTH_BYTES = 16;
+//
 export type EncryptedPayload = {
     nonce: Buffer;
     authTag: Buffer;
     ciphertext: Buffer;
 };
 //
-function validateKey(key: Buffer): void {
-    if (!Buffer.isBuffer(key)) {
-        throw new Error('Key must be a Buffer');
-    }
-    if (key.length !== 32) {
-        throw new Error('Wrong length');
-    }
-    //
-    return;
-}
-//
-function validatePayload(payload: EncryptedPayload): void {
-    if (!Buffer.isBuffer(payload.nonce) || payload.nonce.length !== 12) {
-        throw new Error('none must be a Buffer with length 12');
-    }
-    //
-    if (!Buffer.isBuffer(payload.authTag) || payload.authTag.length !== 16) {
-        throw new Error('authTag must be a Buffer with length 16');
-    }
-    //
-    if (!Buffer.isBuffer(payload.ciphertext)) {
-        throw new Error('ciphertext must be a Buffer');
-    }
-    //
-    return;
-}
-//
 export function encrypt(plaintext: Buffer, key: Buffer): EncryptedPayload {
     validateKey(key);
     //
-    const nonce = randomBytes(12);
-    const cipher = createCipheriv('aes-256-gcm', key, nonce, {
-        authTagLength: 16,
+    const nonce = randomBytes(NONCE_LENGTH_BYTES);
+    const cipher = createCipheriv(ALGORITHM, key, nonce, {
+        authTagLength: AUTH_TAG_LENGTH_BYTES,
     });
     const ciphertext = Buffer.concat([
         cipher.update(plaintext),
@@ -53,17 +31,48 @@ export function decrypt(payload: EncryptedPayload, key: Buffer): Buffer {
     validateKey(key);
     validatePayload(payload);
     //
-    const decipher = createDecipheriv('aes-256-gcm', key, payload.nonce, {
-        authTagLength: 16,
-    });
+    try {
+        const decipher = createDecipheriv(ALGORITHM, key, payload.nonce, {
+            authTagLength: AUTH_TAG_LENGTH_BYTES,
+        });
+        //
+        decipher.setAuthTag(payload.authTag);
+        //
+        const plain = Buffer.concat([
+            decipher.update(payload.ciphertext),
+            decipher.final(),
+        ]);
+        //
+        return plain;
+        //
+    } catch {
+        throw new Error('Encrypted payload failed authentication');
+    }
+}
+//
+function validateKey(key: Buffer): void {
+    if (!Buffer.isBuffer(key) || key.length !== KEY_LENGTH_BYTES) {
+        throw new Error(`Encryption key must be a ${KEY_LENGTH_BYTES} Buffer`);
+    }
+}
+//
+function validatePayload(payload: EncryptedPayload): void {
+    if (
+        !Buffer.isBuffer(payload.nonce) ||
+        payload.nonce.length !== NONCE_LENGTH_BYTES
+    ) {
+        throw new Error('Invalid encrypted payload (none)');
+    }
     //
-    decipher.setAuthTag(payload.authTag);
+    if (
+        !Buffer.isBuffer(payload.authTag) ||
+        payload.authTag.length !== AUTH_TAG_LENGTH_BYTES
+    ) {
+        throw new Error('Invalid encrypted payload (authTag)');
+    }
     //
-    const plaintext = Buffer.concat([
-        decipher.update(payload.ciphertext),
-        decipher.final(),
-    ]);
-    //
-    return plaintext;
+    if (!Buffer.isBuffer(payload.ciphertext)) {
+        throw new Error('Invalid encrypted payload (ciphertext)');
+    }
 }
 //
