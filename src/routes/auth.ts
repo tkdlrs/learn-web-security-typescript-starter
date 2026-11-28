@@ -177,7 +177,11 @@ export function createAuthRouter(deps: Dependencies): Router {
                 .send(renderMfaRecoveryPage('Invalid recovery details.'));
             return;
         }
-
+        //
+        if (passwordNeedsRehash(user.password_hash)) {
+            await updateUserPassword(db, user.id, password);
+        }
+        //
         const challengeToken = getTotpLoginChallengeToken(req.header('cookie'));
         abandonTotpLoginChallenge(db, req.header('cookie'));
         clearTotpSecret(db, user.id);
@@ -194,11 +198,6 @@ export function createAuthRouter(deps: Dependencies): Router {
         if (challengeToken) {
             clearTotpLoginChallengeCookie(res);
         }
-        //
-        if (passwordNeedsRehash(user.password_hash)) {
-            await updateUserPassword(db, user.id, password);
-        }
-        //
         res.redirect('/account/totp');
     });
 
@@ -221,7 +220,11 @@ export function createAuthRouter(deps: Dependencies): Router {
                 .send(renderLoginPage('Invalid email or password', returnTo));
             return;
         }
-
+        //
+        if (passwordNeedsRehash(user.password_hash)) {
+            await updateUserPassword(db, user.id, password);
+        }
+        //
         const challengeToken = getTotpLoginChallengeToken(req.header('cookie'));
         abandonTotpLoginChallenge(db, req.header('cookie'));
 
@@ -247,11 +250,7 @@ export function createAuthRouter(deps: Dependencies): Router {
         if (challengeToken) {
             clearTotpLoginChallengeCookie(res);
         }
-        //
-        if (passwordNeedsRehash(user.password_hash)) {
-            await updateUserPassword(db, user.id, password);
-        }
-        //
+
         res.redirect(returnTo);
     });
 

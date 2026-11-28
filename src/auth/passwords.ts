@@ -47,10 +47,10 @@ export function passwordNeedsRehash(passwordHash: string): boolean {
         return true;
     }
     //
-    if (argon2.needsRehash(passwordHash, PASSWORD_HASH_OPTIONS)) {
-        return true;
+    try {
+        return argon2.needsRehash(passwordHash, PASSWORD_HASH_OPTIONS);
+    } catch {
+        return false;
     }
-    //
-    return false;
 }
 //
