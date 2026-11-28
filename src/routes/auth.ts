@@ -4,6 +4,7 @@ import { safeReturnTo } from '../auth/accessControl.ts';
 import {
     hashPassword,
     MAX_PASSWORD_LENGTH,
+    passwordNeedsRehash,
     verifyPassword,
 } from '../auth/passwords.ts';
 import {
@@ -43,6 +44,7 @@ import {
     findUserById,
     getTotpSecret,
     normalizeEmail,
+    updateUserPassword,
 } from '../auth/users.ts';
 import {
     renderLoginPage,
@@ -192,7 +194,11 @@ export function createAuthRouter(deps: Dependencies): Router {
         if (challengeToken) {
             clearTotpLoginChallengeCookie(res);
         }
-
+        //
+        if (passwordNeedsRehash(user.password_hash)) {
+            await updateUserPassword(db, user.id, password);
+        }
+        //
         res.redirect('/account/totp');
     });
 
@@ -241,7 +247,11 @@ export function createAuthRouter(deps: Dependencies): Router {
         if (challengeToken) {
             clearTotpLoginChallengeCookie(res);
         }
-
+        //
+        if (passwordNeedsRehash(user.password_hash)) {
+            await updateUserPassword(db, user.id, password);
+        }
+        //
         res.redirect(returnTo);
     });
 
